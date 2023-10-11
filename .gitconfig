@@ -1,0 +1,13 @@
+[pager]
+[core]
+	pager = cat
+[init]
+	defaultBranch = main
+[status]
+	short = true
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+	ls = ls-files
