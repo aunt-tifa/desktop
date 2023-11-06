@@ -1,0 +1,71 @@
+#!/bin/bash
+
+reminderFile=$HOME/.reminder
+
+# check dependencies
+for prog in cat getopt rm sed; do
+  command -v $prog &>/dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "Needs $prog to run. Exiting."
+    exit 1
+  fi
+done
+
+# functions
+delall() {
+  read -p "Delete all reminders? [Y/n]: " answer
+  [[ ${answer,,} =~ ^\s*n ]] || rm -f $reminderFile
+}
+
+delitem() {
+  if [[ "$1" =~ ^[0-9]+$ ]]; then
+# numeric value, delete item number
+    sed -i ${1}d $reminderFile
+  else
+# not numeric, delete by pattern
+    sed -i /${1}/d $reminderFile
+  fi
+  if [[ ! -s $reminderFile ]]; then
+# if file size is zero then just remove it
+    rm -f $reminderFile
+  fi
+}
+
+# get opts
+opts=$(getopt -o d:Dh -l help -n $(basename $0) -- "$@")
+[[ $? == 0 ]] || exit 1
+
+# parse opts and do stuff
+eval set -- "$opts"
+while [[ $1 != '--' ]]; do
+  case "$1" in
+    -d)
+      delitem "$2"
+      exit 0
+      ;;
+    -D)
+      delall
+      exit 0
+      ;;
+    -h|--help)
+      echo "Usage: remind [new reminder|-d [item number|pattern]|-D]"
+      exit 0
+      ;;
+    *)
+      echo "Something went really wrong. Giving up."
+      exit 1
+      ;;
+  esac
+done
+shift
+
+if [[ $# -eq 0 ]]; then
+# no args, show reminders
+  if [[ -s $reminderFile ]]; then
+    echo -e "    \e[43m\e[30m  ** REMINDER **  \e[0m"
+    cat -n $reminderFile
+  fi
+else
+# add reminder
+  echo $@ >> $reminderFile
+fi
