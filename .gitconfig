@@ -11,3 +11,5 @@
 	ci = commit
 	st = status
 	ls = ls-files
+[pull]
+	rebase = true
