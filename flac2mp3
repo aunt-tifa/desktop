@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# rewrite the old flac2mp3 to include options and better filename handling
+#
+# 20210613
+#
+
+# how to exit on error
+errexit() {
+  echo $@
+  exit 1
+}
+
+# check for dependencies
+for dependency in basename cat false file getopt lame metaflac mkdir sed true; do
+  command -v &>/dev/null || errexit "Dependency $dependency not found."
+done
+
+# usage/help
+# contains literal tabs in here-doc
+usage() {
+  cat <<-EOF
+	Usage: ${0##*/} [-c|--create-dir] [-d|--directory] [-h|--help] file1 [file2 ...]
+	Options:
+	  -c, --create-dir
+	    Create output directory
+	  -d, --directory
+	    Directory to write output files to
+	  -f, --force
+	    Force file conversion, even if files aren't identified as FLAC by 'file'
+	  -h, --help
+	    This message
+	EOF
+}
+
+# defaults
+create_dir=false
+directory=.
+force=false
+
+# get options
+opts=$(getopt -o c,d:,f,h -l create-dir,directory:,force,help -n ${0##*/} -- "$@")
+[[ $? == 0 ]] || errexit "Could not get command line options."
+
+# parse options
+eval set -- "$opts"
+while [[ $1 != '--' ]]; do
+  case $1 in
+    -c|--create-dir)
+      create_dir=true
+      shift
+      ;;
+    -d|--directory)
+      directory="$2"
+      shift 2
+      ;;
+    -f|--force)
+      force=true
+      shift
+      ;;
+    -h|--help|*)
+      usage
+      exit
+      ;;
+  esac
+done
+shift
+
+# remove trailing / from directory for tidyness
+directory=${directory%%/}
+
+# create directory if specified, unless it exists
+if $create_dir; then
+  if [[ -d "$directory" ]]; then
+    echo "$directory already exists. Skipping directory creation."
+  elif [[ -z $directory ]]; then
+    errexit "Directory to be created must be specified."
+  else
+    mkdir "$directory" || errexit "Problem creating directory $directory."
+  fi
+fi
+
+# ensure directory is writable
+[[ -w "$directory" ]] || errexit "Output directory $directory is not writable."
+
+# process each file/arg until empty
+while [[ -n $1 ]]; do
+
+# ensure this is a readable file
+  if [[ -r "$1" ]]; then
+
+# ensure this is a flac file
+    if [[ $(file "$1") =~ " FLAC audio " || $force ]]; then
+
+# encode the flac file, including id3 tags derived from the flac file, if any
+      lame -V2 --vbr-new\
+        --ta "$(metaflac --show-tag artist "$1" | sed 's/.*=//')"\
+        --tt "$(metaflac --show-tag title "$1" | sed 's/.*=//')"\
+        --tl "$(metaflac --show-tag album "$1" | sed 's/.*=//')"\
+        --tg "$(metaflac --show-tag genre "$1" | sed 's/.*=//')"\
+        --tn "$(metaflac --show-tag tracknumber "$1" | sed 's/.*=//')"\
+        --ty "$(metaflac --show-tag date "$1" | sed 's/.*=//')"\
+        "$1" "${directory}/$(basename "${1%%.flac}.mp3")"
+
+# probably a non-flac file
+    else
+      echo "Presumably non-FLAC file $1. Skipping."
+    fi
+
+# cannot read this file. non-fatal
+  else
+    echo "Cannot read file $1. Skipping."
+  fi
+
+  shift
+done
