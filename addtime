@@ -1,93 +1,103 @@
 #!/bin/bash
 
-# if $1 is '-h', print brief help
-if [[ "$1" = "-h" || "$1" = "--help" ]]; then
-cat <<EOF
-Add a list of times from standard input using day:hour:minute:second format.
-All fields but seconds are optional. Field separator may be any non-numeric
-character but must be consistent across each line of input. Only one
-measurement of time per line.
-EOF
+# if $1, print brief help
+if [[ -n $1 ]]; then
+	cat <<-EOF
+		Add a list of times from standard input using day:hour:minute:second format.
+		All fields but seconds are optional. Field separator may be any non-numeric
+		character but must be consistent across each line of input. Only one
+		measurement of time per line.
+	EOF
   exit 0
 fi
 
+# how to exit on error
+errexit() {
+  echo $@
+  exit 1
+}
+
 # check for missing dependencies
 for i in tr; do
-  if ! command -v $i >/dev/null; then
-    echo "Dependency $i not found."
-    exit 1
-  fi
+  command -v $i >/dev/null || errexit "Dependency $i not found."
 done
 
-# declare -A time
-declare -A time=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
+# declare array total
+declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
 
-# while readline is not empty
-while read; do
+# while consuming input
+while read time; do
 
-  # identify delimiter
-  delimiter=$(echo $REPLY|tr -d [0-9])
+# automatically identify time field delimiter
+# sift non-numeric characters from $time
+  delimiter=$(echo $time|tr -d [0-9])
+
+# non-empty remains signifies non-numeric characters remain
   if [[ -n $delimiter ]]; then
+
+# if something remains after the first of non-numeric chars is removed, we have a second non-numeric char and delimiter
+# confusion
     if [[ -n $(echo $delimiter | tr -d ${delimiter:0:1}) ]]; then
-      echo "Error: Too many non-digital characters. Invisible color codes maybe?"
-      exit 1
+      errexit "Error: Too many non-digital characters. Invisible color codes maybe?"
     fi
+
+# otherwise we have only a single type of non-numeric character and a clear delimiter
     delimiter=${delimiter:0:1}
-    REPLY=${delimiter}${REPLY}
+    time=${delimiter}${time}
   fi
 
   for i in seconds minutes hours days; do
-    if [[ $REPLY != $delimiter && -n $REPLY ]]; then
-      # add rightmost field to time[$i]
-      time[$i]=$((10#${time[$i]} + 10#${REPLY##*$delimiter}))
+    if [[ $time != $delimiter && -n $time ]]; then
+# add rightmost field to total[$i]
+# need to force base 10 because of leading 0s
+      total[$i]=$((10#${total[$i]} + 10#${time##*$delimiter}))
 
-      # strip ${delimiter}${REPLY##*$delimiter} from right of string
-      REPLY=${REPLY%${delimiter}${REPLY##*$delimiter}}
+# strip ${delimiter}${time##*$delimiter} from right of string
+      time=${time%${delimiter}${time##*$delimiter}}
     fi
   done
 
-  # if string is not empty, print error and exit 1
-  if [[ -n $REPLY ]]; then
-    echo "Input seems to contain too many fields. Please limit to seconds, hours, minutes, days."
-    exit 1
+# if string is not empty after processing 4 fields, print error and exit 1
+  if [[ -n $time ]]; then
+    errexit "Input seems to contain too many fields. Please limit to seconds, hours, minutes, days."
   fi
 
 done
 
-# add ${time[seconds]} / 60 to time[minutes]
-time[minutes]=$((${time[minutes]} + (${time[seconds]} / 60)))
+# add ${total[seconds]} / 60 to total[minutes]
+total[minutes]=$((${total[minutes]} + (${total[seconds]} / 60)))
 
-# time[seconds]=${time[seconds]} % 60
-time[seconds]=$((${time[seconds]} % 60))
-
-# zero fill if <= 9
-if [[ ${time[seconds]} -le 9 ]]; then
-  time[seconds]=0${time[seconds]}
-fi
-
-# add ${time[minutes]} / 60 to time[hours]
-time[hours]=$((${time[hours]} + (${time[minutes]} / 60)))
-
-# time[minutes]=${time[minutes]} % 60
-time[minutes]=$((${time[minutes]} % 60))
+# total[seconds]=${total[seconds]} % 60
+total[seconds]=$((${total[seconds]} % 60))
 
 # zero fill if <= 9
-if [[ ${time[minutes]} -le 9 ]]; then
-  time[minutes]=0${time[minutes]}
+if [[ ${total[seconds]} -le 9 ]]; then
+  total[seconds]=0${total[seconds]}
 fi
 
-# add ${time[hours]} / 24 to time[days]
-time[days]=$((${time[days]} + (${time[hours]} / 24)))
+# add ${total[minutes]} / 60 to total[hours]
+total[hours]=$((${total[hours]} + (${total[minutes]} / 60)))
 
-# time[hours]=${time[hours]} % 24
-time[hours]=$((${time[hours]} % 24))
+# total[minutes]=${total[minutes]} % 60
+total[minutes]=$((${total[minutes]} % 60))
 
 # zero fill if <= 9
-if [[ ${time[hours]} -le 9 ]]; then
-  time[hours]=0${time[hours]}
+if [[ ${total[minutes]} -le 9 ]]; then
+  total[minutes]=0${total[minutes]}
 fi
 
-# print ${time[days]} ${time[hours]}  ${time[minutes]} ${time[seconds]}
-echo Total time: ${time[days]}:${time[hours]}:${time[minutes]}:${time[seconds]}
+# add ${total[hours]} / 24 to total[days]
+total[days]=$((${total[days]} + (${total[hours]} / 24)))
+
+# total[hours]=${total[hours]} % 24
+total[hours]=$((${total[hours]} % 24))
+
+# zero fill if <= 9
+if [[ ${total[hours]} -le 9 ]]; then
+  total[hours]=0${total[hours]}
+fi
+
+# print ${total[days]} ${total[hours]}  ${total[minutes]} ${total[seconds]}
+echo Total time: ${total[days]}:${total[hours]}:${total[minutes]}:${total[seconds]}
 
 exit 0
