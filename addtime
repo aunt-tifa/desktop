@@ -18,9 +18,10 @@ errexit() {
 }
 
 # check for missing dependencies
-for i in tr; do
-  command -v $i >/dev/null || errexit "Dependency $i not found."
+for dependency in tr; do
+  command -v $dependency >/dev/null || errexit "Dependency $dependency not found."
 done
+unset dependency
 
 # declare array total
 declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
@@ -46,16 +47,17 @@ while read time; do
     time=${delimiter}${time}
   fi
 
-  for i in seconds minutes hours days; do
+  for unit in seconds minutes hours days; do
     if [[ $time != $delimiter && -n $time ]]; then
-# add rightmost field to total[$i]
+# add rightmost field to total[$unit]
 # need to force base 10 because of leading 0s
-      total[$i]=$((10#${total[$i]} + 10#${time##*$delimiter}))
+      total[$unit]=$((10#${total[$unit]} + 10#${time##*$delimiter}))
 
 # strip ${delimiter}${time##*$delimiter} from right of string
       time=${time%${delimiter}${time##*$delimiter}}
     fi
   done
+  unset unit
 
 # if string is not empty after processing 4 fields, print error and exit 1
   if [[ -n $time ]]; then
