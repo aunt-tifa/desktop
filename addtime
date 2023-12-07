@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# if $1, print brief help
-if [[ -n $1 ]]; then
-	cat <<-EOF
-		Add a list of times from standard input using day:hour:minute:second format.
-		All fields but seconds are optional. Field separator may be any non-numeric
-		character but must be consistent across each line of input. Only one
-		measurement of time per line.
-	EOF
-  exit 0
-fi
+# read times from stdin and add them up.
+#
+
+# defaults
+delimiter=:
 
 # how to exit on error
 errexit() {
@@ -18,10 +13,49 @@ errexit() {
 }
 
 # check for missing dependencies
-for dependency in tr; do
+for dependency in cat getopt tr; do
   command -v $dependency >/dev/null || errexit "Dependency $dependency not found."
 done
 unset dependency
+
+# usage/help
+# contains literal tabs in here-doc
+usage() {
+  cat <<-EOF
+	Add a list of times from standard input using day:hour:minute:second format.
+	All fields but seconds are optional. Field separator is ':' by default. One
+	measurement of time per line.
+
+	Usage: ${0##*/} [-d|--delimiter] [-h|--help]
+	Options:
+	  -d, --delimiter DELIM
+	    Use DELIM instead of : for field delimiter
+	  -h, --help
+	    This message
+	EOF
+}
+
+# get options
+opts=$(getopt -o d:,h -l delimiter:,help -n ${0##*/} -- "$@")
+[[ $? == 0 ]] || errexit "Could not get command line options."
+
+# parse options
+eval set -- "$opts"
+while [[ $1 != '--' ]]; do
+  case $1 in
+    -d|--delimiter)
+      delimiter="$2"
+      shift 2
+      ;;
+    -h|--help|*)
+      usage
+      exit
+      ;;
+  esac
+done
+
+# make sure delimiter is only one character
+[[ ${#delimiter} != 1 ]] && errexit "Delimiter must be one character."
 
 # declare array total
 declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
@@ -29,23 +63,8 @@ declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
 # while consuming input
 while read time; do
 
-# automatically identify time field delimiter
-# sift non-numeric characters from $time
-  delimiter=$(echo $time|tr -d [0-9])
-
-# non-empty remains signifies non-numeric characters remain
-  if [[ -n $delimiter ]]; then
-
-# if something remains after the first of non-numeric chars is removed, we have a second non-numeric char and delimiter
-# confusion
-    if [[ -n $(echo $delimiter | tr -d ${delimiter:0:1}) ]]; then
-      errexit "Error: Too many non-digital characters. Invisible color codes maybe?"
-    fi
-
-# otherwise we have only a single type of non-numeric character and a clear delimiter
-    delimiter=${delimiter:0:1}
-    time=${delimiter}${time}
-  fi
+# pad input with $delimiter for some reason
+  time=${delimiter}${time}
 
   for unit in seconds minutes hours days; do
     if [[ $time != $delimiter && -n $time ]]; then
