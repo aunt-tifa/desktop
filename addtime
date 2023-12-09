@@ -104,8 +104,8 @@ total[minutes]=$(bc <<< "${total[minutes]} + (${total[seconds]} / 60)")
 # seconds are the remainder of seconds/60
 total[seconds]=$(bc <<< "${total[seconds]} % 60")
 
-# zero pad seconds if < 10
-if [[ $(bc <<< "${total[seconds]} < 1") -eq 1 ]]; then
+# zero pad seconds if < 10 and not 0
+if [[ $(bc <<< "${total[seconds]} > 0 && ${total[seconds]} < 1") -eq 1 ]]; then
   total[seconds]=00${total[seconds]}
 elif [[ $(bc <<< "${total[seconds]} < 10") -eq 1 ]]; then
   total[seconds]=0${total[seconds]}
@@ -117,8 +117,8 @@ total[hours]=$(bc <<< "${total[hours]} + (${total[minutes]} / 60)")
 # minutes are the remainder of minutes/60
 total[minutes]=$(bc <<< "${total[minutes]} % 60")
 
-# zero pad minutes if < 10
-if [[ $(bc <<< "${total[minutes]} < 1") -eq 1 ]]; then
+# zero pad minutes if < 10 and not 0
+if [[ $(bc <<< "${total[minutes]} > 0 && ${total[minutes]} < 1") -eq 1 ]]; then
   total[minutes]=00${total[minutes]}
 elif [[ $(bc <<< "${total[minutes]} < 10") -eq 1 ]]; then
   total[minutes]=0${total[minutes]}
@@ -130,8 +130,8 @@ total[days]=$(bc <<< "${total[days]} + (${total[hours]} / 24)")
 # hours are the remainder of hours/24
 total[hours]=$(bc <<< "${total[hours]} % 24")
 
-# zero pad hours if < 10
-if [[ $(bc <<< "${total[hours]} < 1") -eq 1 ]]; then
+# zero pad hours if < 10 and not 0
+if [[ $(bc <<< "${total[hours]} > 0 && ${total[hours]} < 1") -eq 1 ]]; then
   total[hours]=00${total[hours]}
 elif [[ $(bc <<< "${total[hours]} < 10") -eq 1 ]]; then
   total[hours]=0${total[hours]}
@@ -141,7 +141,7 @@ fi
 finaltotal=${total[days]}${delimiter}${total[hours]}${delimiter}${total[minutes]}${delimiter}${total[seconds]}
 
 # drop each leading 0 or $delimiter
-while [[ ${finaltotal:0:1} = 0 || ${finaltotal:0:1} = $delimiter ]]; do
+while [[ ${#finaltotal} -gt 1 && ${finaltotal:0:1} = 0 || ${finaltotal:0:1} = $delimiter ]]; do
   finaltotal=${finaltotal:1}
 done
 
