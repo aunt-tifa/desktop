@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# if $1, print brief help
-if [[ -n $1 ]]; then
-	cat <<-EOF
-		Add a list of times from standard input using day:hour:minute:second format.
-		All fields but seconds are optional. Field separator may be any non-numeric
-		character but must be consistent across each line of input. Only one
-		measurement of time per line.
-	EOF
-  exit 0
-fi
+# read times from stdin and add them up.
+#
+
+# defaults
+delimiter=:
+short=false
 
 # how to exit on error
 errexit() {
@@ -18,9 +14,55 @@ errexit() {
 }
 
 # check for missing dependencies
-for i in tr; do
-  command -v $i >/dev/null || errexit "Dependency $i not found."
+for dependency in bc cat getopt tr; do
+  command -v $dependency >/dev/null || errexit "Dependency $dependency not found."
 done
+unset dependency
+
+# usage/help
+# contains literal tabs in here-doc
+usage() {
+  cat <<-EOF
+	Add a list of times from standard input using day:hour:minute:second format.
+	All fields but seconds are optional. Field separator is ':' by default. One
+	measurement of time per line.
+
+	Usage: ${0##*/} [-d|--delimiter] [-h|--help]
+	Options:
+	  -d, --delimiter DELIM
+	    Use DELIM instead of : for field delimiter
+	  -h, --help
+	    This message
+	  -s, --short
+	    Don't print "Total time:" with the output
+	EOF
+}
+
+# get options
+opts=$(getopt -o d:hs -l delimiter:,help,short -n ${0##*/} -- "$@")
+[[ $? == 0 ]] || errexit "Could not get command line options."
+
+# parse options
+eval set -- "$opts"
+while [[ $1 != '--' ]]; do
+  case $1 in
+    -d|--delimiter)
+      delimiter="$2"
+      shift 2
+      ;;
+    -s|--short)
+      short=true
+      shift 1
+      ;;
+    -h|--help|*)
+      usage
+      exit
+      ;;
+  esac
+done
+
+# make sure delimiter is only one character
+[[ ${#delimiter} != 1 ]] && errexit "Delimiter must be one character."
 
 # declare array total
 declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
@@ -28,34 +70,19 @@ declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
 # while consuming input
 while read time; do
 
-# automatically identify time field delimiter
-# sift non-numeric characters from $time
-  delimiter=$(echo $time|tr -d [0-9])
+# pad input with $delimiter to help with rudimentary shifting
+  time=${delimiter}${time}
 
-# non-empty remains signifies non-numeric characters remain
-  if [[ -n $delimiter ]]; then
-
-# if something remains after the first of non-numeric chars is removed, we have a second non-numeric char and delimiter
-# confusion
-    if [[ -n $(echo $delimiter | tr -d ${delimiter:0:1}) ]]; then
-      errexit "Error: Too many non-digital characters. Invisible color codes maybe?"
-    fi
-
-# otherwise we have only a single type of non-numeric character and a clear delimiter
-    delimiter=${delimiter:0:1}
-    time=${delimiter}${time}
-  fi
-
-  for i in seconds minutes hours days; do
+  for unit in seconds minutes hours days; do
     if [[ $time != $delimiter && -n $time ]]; then
-# add rightmost field to total[$i]
-# need to force base 10 because of leading 0s
-      total[$i]=$((10#${total[$i]} + 10#${time##*$delimiter}))
+# add rightmost field to total[$unit]
+      total[$unit]=$(bc <<< "${total[$unit]} + ${time##*$delimiter}")
 
-# strip ${delimiter}${time##*$delimiter} from right of string
+# strip ${delimiter} and last field from right of string
       time=${time%${delimiter}${time##*$delimiter}}
     fi
   done
+  unset unit
 
 # if string is not empty after processing 4 fields, print error and exit 1
   if [[ -n $time ]]; then
@@ -65,37 +92,48 @@ while read time; do
 done
 
 # whole groups of 60 (seconds/60) get added to minutes
-total[minutes]=$((${total[minutes]} + (${total[seconds]} / 60)))
+total[minutes]=$(bc <<< "${total[minutes]} + (${total[seconds]} / 60)")
 
 # seconds are the remainder of seconds/60
-total[seconds]=$((${total[seconds]} % 60))
+total[seconds]=$(bc <<< "${total[seconds]} % 60")
 
-# zero fill seconds if <= 9
-if [[ ${total[seconds]} -le 9 ]]; then
+# zero pad seconds if < 10
+if [[ $(bc <<< "${total[seconds]} < 10") -eq 1 ]]; then
   total[seconds]=0${total[seconds]}
 fi
 
 # whole groups of 60 (minutes/60) get added to hours
-total[hours]=$((${total[hours]} + (${total[minutes]} / 60)))
+total[hours]=$(bc <<< "${total[hours]} + (${total[minutes]} / 60)")
 
 # minutes are the remainder of minutes/60
-total[minutes]=$((${total[minutes]} % 60))
+total[minutes]=$(bc <<< "${total[minutes]} % 60")
 
-# zero fill minutes if <= 9
-if [[ ${total[minutes]} -le 9 ]]; then
+# zero pad minutes if < 10
+if [[ $(bc <<< "${total[minutes]} < 10") -eq 1 ]]; then
   total[minutes]=0${total[minutes]}
 fi
 
 # whole groups of 24 (hours/24) get added to days
-total[days]=$((${total[days]} + (${total[hours]} / 24)))
+total[days]=$(bc <<< "${total[days]} + (${total[hours]} / 24)")
 
 # hours are the remainder of hours/24
-total[hours]=$((${total[hours]} % 24))
+total[hours]=$(bc <<< "${total[hours]} % 24")
 
-# zero fill hours if <= 9
-if [[ ${total[hours]} -le 9 ]]; then
+# zero pad hours if < 10
+if [[ $(bc <<< "${total[hours]} < 10") -eq 1 ]]; then
   total[hours]=0${total[hours]}
 fi
 
-# print ${total[days]} ${total[hours]}  ${total[minutes]} ${total[seconds]}
-echo Total time: ${total[days]}:${total[hours]}:${total[minutes]}:${total[seconds]}
+# final total
+finaltotal=${total[days]}:${total[hours]}:${total[minutes]}:${total[seconds]}
+
+# drop each leading field if 0, until seconds
+while [[ $finaltotal =~ ^0+${delimiter} ]]; do
+  finaltotal=${finaltotal#*$delimiter}
+done
+
+# print fancy output unless -s|--short
+$short || printf "Total time: "
+
+# print total
+echo $finaltotal
