@@ -5,6 +5,7 @@
 
 # defaults
 delimiter=:
+short=false
 
 # how to exit on error
 errexit() {
@@ -32,11 +33,13 @@ usage() {
 	    Use DELIM instead of : for field delimiter
 	  -h, --help
 	    This message
+	  -s, --short
+	    Don't print "Total time:" with the output
 	EOF
 }
 
 # get options
-opts=$(getopt -o d:,h -l delimiter:,help -n ${0##*/} -- "$@")
+opts=$(getopt -o d:hs -l delimiter:,help,short -n ${0##*/} -- "$@")
 [[ $? == 0 ]] || errexit "Could not get command line options."
 
 # parse options
@@ -46,6 +49,10 @@ while [[ $1 != '--' ]]; do
     -d|--delimiter)
       delimiter="$2"
       shift 2
+      ;;
+    -s|--short)
+      short=true
+      shift 1
       ;;
     -h|--help|*)
       usage
@@ -90,7 +97,7 @@ total[minutes]=$(bc <<< "${total[minutes]} + (${total[seconds]} / 60)")
 # seconds are the remainder of seconds/60
 total[seconds]=$(bc <<< "${total[seconds]} % 60")
 
-# zero pad seconds if <= 9
+# zero pad seconds if < 10
 if [[ $(bc <<< "${total[seconds]} < 10") -eq 1 ]]; then
   total[seconds]=0${total[seconds]}
 fi
@@ -101,7 +108,7 @@ total[hours]=$(bc <<< "${total[hours]} + (${total[minutes]} / 60)")
 # minutes are the remainder of minutes/60
 total[minutes]=$(bc <<< "${total[minutes]} % 60")
 
-# zero pad minutes if <= 9
+# zero pad minutes if < 10
 if [[ $(bc <<< "${total[minutes]} < 10") -eq 1 ]]; then
   total[minutes]=0${total[minutes]}
 fi
@@ -112,7 +119,7 @@ total[days]=$(bc <<< "${total[days]} + (${total[hours]} / 24)")
 # hours are the remainder of hours/24
 total[hours]=$(bc <<< "${total[hours]} % 24")
 
-# zero pad hours if <= 9
+# zero pad hours if < 10
 if [[ $(bc <<< "${total[hours]} < 10") -eq 1 ]]; then
   total[hours]=0${total[hours]}
 fi
@@ -125,5 +132,8 @@ while [[ $finaltotal =~ ^0+${delimiter} ]]; do
   finaltotal=${finaltotal#*$delimiter}
 done
 
-# print ${total[days]} ${total[hours]}  ${total[minutes]} ${total[seconds]}
-echo Total time: $finaltotal
+# print fancy output unless -s|--short
+$short || printf "Total time: "
+
+# print total
+echo $finaltotal
