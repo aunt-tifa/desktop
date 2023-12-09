@@ -70,6 +70,9 @@ declare -A total=([seconds]=0 [minutes]=0 [hours]=0 [days]=0)
 # while consuming input
 while read time; do
 
+# make sure input contains only numbers, delimiters, or periods
+  [[ $time =~ ^[0-9${delimiter}.]+$ ]] || errexit "Input should only contain digits, ${delimiter}, and '.': $time"
+
 # pad input with $delimiter to help with rudimentary shifting
   time=${delimiter}${time}
 
