@@ -125,7 +125,7 @@ if [[ $(bc <<< "${total[hours]} < 10") -eq 1 ]]; then
 fi
 
 # final total
-finaltotal=${total[days]}:${total[hours]}:${total[minutes]}:${total[seconds]}
+finaltotal=${total[days]}${delimiter}${total[hours]}${delimiter}${total[minutes]}${delimiter}${total[seconds]}
 
 # drop each leading field if 0, until seconds
 while [[ $finaltotal =~ ^0+${delimiter} ]]; do
