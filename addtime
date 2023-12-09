@@ -131,7 +131,7 @@ fi
 finaltotal=${total[days]}${delimiter}${total[hours]}${delimiter}${total[minutes]}${delimiter}${total[seconds]}
 
 # drop each leading field if 0, until seconds
-while [[ $finaltotal =~ ^0+${delimiter} ]]; do
+while [[ ! $finaltotal =~ ^[0-9]+$ ]]; do
   finaltotal=${finaltotal#*$delimiter}
 done
 
