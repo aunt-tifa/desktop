@@ -3,6 +3,7 @@ map <F4> :set hls!<CR>
 map <F5> :set invpaste<CR>
 map <F6> :set list!<CR>
 map <F7> :set linebreak! number!<CR>
+map <F8> :set spell!<CR>
 set autoindent
 set background=dark
 set expandtab
