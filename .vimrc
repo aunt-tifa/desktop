@@ -28,6 +28,7 @@ else
 endif
 autocmd FileType * set formatoptions+=t
 autocmd FileType * set formatoptions-=ro
+autocmd FileType gitcommit setlocal textwidth=72
 augroup tmux
   autocmd!
   if exists('$TMUX')
