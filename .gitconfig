@@ -13,3 +13,5 @@
 	ls = ls-files
 [pull]
 	rebase = true
+[color]
+	diff = true
