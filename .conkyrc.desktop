@@ -56,7 +56,4 @@ ${voffset 4}${color goldenrod}NAME${alignr}PID    ${color 28d700}IO%  ${color go
 ${voffset 0}${color}${top_io name 1}${alignr}${top_io pid 1} ${top_io io_perc 1}${top_io cpu 1}
 ${voffset 0}${color}${top_io name 2}${alignr}${top_io pid 2} ${top_io io_perc 2}${top_io cpu 2}
 ${voffset 0}${color}${top_io name 3}${alignr}${top_io pid 3} ${top_io io_perc 3}${top_io cpu 3}
-#${hr}
-#${font monospace regular 12}
-#${alignc}${texeci 1800 curl wttr.in/ind\?format=2}
 ]]
