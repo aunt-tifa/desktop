@@ -14,3 +14,5 @@
 	diff = always
 [pull]
 	rebase = false
+[merge]
+	tool = vimdiff
