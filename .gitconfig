@@ -1,4 +1,3 @@
-[pager]
 [core]
 	pager = cat
 [init]
@@ -11,7 +10,5 @@
 	ci = commit
 	st = status
 	ls = ls-files
-[pull]
-	rebase = true
 [color]
 	diff = always
