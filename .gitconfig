@@ -12,3 +12,5 @@
 	ls = ls-files
 [color]
 	diff = always
+[pull]
+	rebase = false
