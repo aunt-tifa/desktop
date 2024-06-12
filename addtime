@@ -35,11 +35,17 @@ usage() {
 	    This message
 	  -s, --short
 	    Don't print "Total time:" with the output
+	  -H, --hours
+	    Output in hours:minutes:seconds
+	  -M, --minutes
+	    Output in minutes:seconds
+	  -S, --seconds
+	    Output in seconds
 	EOF
 }
 
 # get options
-opts=$(getopt -o d:hs -l delimiter:,help,short -n ${0##*/} -- "$@")
+opts=$(getopt -o d:hsHMS -l delimiter:,help,short,hours,minutes,seconds -n ${0##*/} -- "$@")
 [[ $? == 0 ]] || errexit "Could not get command line options."
 
 # parse options
@@ -52,6 +58,18 @@ while [[ $1 != '--' ]]; do
       ;;
     -s|--short)
       short=true
+      shift 1
+      ;;
+    -H|--hours)
+      resolution=H
+      shift 1
+      ;;
+    -M|--minutes)
+      resolution=M
+      shift 1
+      ;;
+    -S|--seconds)
+      resolution=S
       shift 1
       ;;
     -h|--help|*)
@@ -100,27 +118,49 @@ total[minutes]=$(bc <<< "${total[minutes]} + (${total[seconds]} / 60)")
 # seconds are the remainder of seconds/60
 total[seconds]=$(bc <<< "${total[seconds]} % 60")
 
-# zero pad seconds if < 10
-if [[ $(bc <<< "${total[seconds]} < 10") -eq 1 ]]; then
-  total[seconds]=0${total[seconds]}
-fi
-
 # whole groups of 60 (minutes/60) get added to hours
 total[hours]=$(bc <<< "${total[hours]} + (${total[minutes]} / 60)")
 
 # minutes are the remainder of minutes/60
 total[minutes]=$(bc <<< "${total[minutes]} % 60")
 
-# zero pad minutes if < 10
-if [[ $(bc <<< "${total[minutes]} < 10") -eq 1 ]]; then
-  total[minutes]=0${total[minutes]}
-fi
-
 # whole groups of 24 (hours/24) get added to days
 total[days]=$(bc <<< "${total[days]} + (${total[hours]} / 24)")
 
 # hours are the remainder of hours/24
 total[hours]=$(bc <<< "${total[hours]} % 24")
+
+# collapse days into hours if resolution is hours, minutes, or seconds
+case $resolution in
+  H|M|S)
+    total[hours]=$(( ${total[days]} * 24 + ${total[hours]} ))
+    total[days]=0
+    ;;
+esac
+
+# collapse hours into minutes if resolution is minutes or seconds
+case $resolution in
+  M|S)
+    total[minutes]=$(( ${total[hours]} * 60 + ${total[minutes]} ))
+    total[hours]=0
+    ;;
+esac
+
+# collapse minutes into seconds if resolution is seconds
+if [[ $resolution == S ]]; then
+  total[seconds]=$(( ${total[minutes]} * 60 + ${total[seconds]} ))
+  total[minutes]=0
+fi
+
+# zero pad seconds if < 10
+if [[ $(bc <<< "${total[seconds]} < 10") -eq 1 ]]; then
+  total[seconds]=0${total[seconds]}
+fi
+
+# zero pad minutes if < 10
+if [[ $(bc <<< "${total[minutes]} < 10") -eq 1 ]]; then
+  total[minutes]=0${total[minutes]}
+fi
 
 # zero pad hours if < 10
 if [[ $(bc <<< "${total[hours]} < 10") -eq 1 ]]; then
