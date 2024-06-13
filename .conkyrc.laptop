@@ -47,15 +47,15 @@ ${voffset 1}${color darkgreen}${downspeedgraph wlp2s0b1 11,120 082000 28d700} ${
 ${voffset 1}${color}eno1 Dn: ${color green}${downspeed eno1}/s ${alignr}${color}Up: ${color red}${upspeed eno1}/s
 ${voffset 1}${color darkgreen}${downspeedgraph eno1 11,120 082000 28d700}${alignr}${color darkred}${upspeedgraph eno1 11,120 250000 d70000}
 ${voffset 4}${color}Wasted: ${uptime}${alignr}Proc: ${running_processes}/${processes}
-${voffset 4}${color goldenrod}NAME${alignr}PID   ${color red}CPU%  ${color goldenrod}MEM%
+${voffset 4}${color goldenrod}NAME (${color red}CPU%${color goldenrod})${alignr}PID   ${color red}CPU%  ${color goldenrod}MEM%
 ${voffset 0}${color}${top name 1}${alignr}${top pid 1} ${top cpu 1}${top mem 1}
 ${voffset 0}${color}${top name 2}${alignr}${top pid 2} ${top cpu 2}${top mem 2}
 ${voffset 0}${color}${top name 3}${alignr}${top pid 3} ${top cpu 3}${top mem 3}
-${voffset 4}${color goldenrod}NAME${alignr}PID   ${color deepskyblue1}MEM%  ${color goldenrod}CPU%
+${voffset 4}${color goldenrod}NAME (${color deepskyblue1}MEM%${color goldenrod})${alignr}PID   ${color deepskyblue1}MEM%  ${color goldenrod}CPU%
 ${voffset 0}${color}${top_mem name 1}${alignr}${top_mem pid 1} ${top_mem mem 1}${top_mem cpu 1}
 ${voffset 0}${color}${top_mem name 2}${alignr}${top_mem pid 2} ${top_mem mem 2}${top_mem cpu 2}
 ${voffset 0}${color}${top_mem name 3}${alignr}${top_mem pid 3} ${top_mem mem 3}${top_mem cpu 3}
-${voffset 4}${color goldenrod}NAME${alignr}PID    ${color 28d700}IO%  ${color goldenrod}CPU%
+${voffset 4}${color goldenrod}NAME (${color 28d700}IO%${color goldenrod})${alignr}PID    ${color 28d700}IO%  ${color goldenrod}CPU%
 ${voffset 0}${color}${top_io name 1}${alignr}${top_io pid 1} ${top_io io_perc 1}${top_io cpu 1}
 ${voffset 0}${color}${top_io name 2}${alignr}${top_io pid 2} ${top_io io_perc 2}${top_io cpu 2}
 ${voffset 0}${color}${top_io name 3}${alignr}${top_io pid 3} ${top_io io_perc 3}${top_io cpu 3}
