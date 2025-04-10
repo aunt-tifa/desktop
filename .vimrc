@@ -19,6 +19,7 @@ set smartindent
 set smarttab
 set splitbelow
 set splitright
+set tabpagemax=30
 set tabstop=2
 set term=xterm-256color
 if &diff
