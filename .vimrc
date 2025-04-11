@@ -29,6 +29,7 @@ else
 endif
 autocmd FileType * set formatoptions+=t
 autocmd FileType * set formatoptions-=ro
+autocmd Syntax markdown syn match markdownError "\w\@<=\w\@="
 augroup gitcommit
   autocmd!
   autocmd FileType gitcommit setlocal textwidth=72
