@@ -5,11 +5,12 @@
 [status]
 	short = true
 [alias]
-	co = checkout
 	br = branch
+  brsc = branch --sort=committerdate
 	ci = commit
-	st = status
+	co = checkout
 	ls = ls-files
+	st = status
 [color]
 	diff = always
 [pull]
