@@ -10,6 +10,7 @@
 	ci = commit
 	co = checkout
 	ls = ls-files
+  mt = mergetool
 	st = status
 [color]
 	diff = always
