@@ -1,4 +1,4 @@
-map <F3> 0i# 
+map <F3> 0i# 0
 map <F4> :set hls!<CR>
 map <F5> :set invpaste<CR>
 map <F6> :set list!<CR>
