@@ -1,0 +1,9 @@
+export \
+  DPKG_PAGER=less\ -F \
+  EDITOR=vim \
+  GIT_PS1_SHOWSTASHSTATE=y \
+  HISTTIMEFORMAT=%F\ %T\  \
+  LESS="R x2" \
+  PAGER=less \
+  SYSTEMD_PAGER=less\ -F \
+  VISUAL=vim
