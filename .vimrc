@@ -35,6 +35,11 @@ augroup gitcommit
   autocmd FileType gitcommit setlocal textwidth=72
   autocmd FileType gitcommit set spell
 augroup END
+augroup headers
+  autocmd!
+  autocmd FileType markdown map \h1 YpVr=
+  autocmd FileType markdown map \h2 YpVr-
+augroup END
 augroup tmux
   autocmd!
   if exists('$TMUX')
