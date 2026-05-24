@@ -37,8 +37,8 @@ augroup gitcommit
 augroup END
 augroup headers
   autocmd!
-  autocmd FileType markdown map \h1 YpVr=
-  autocmd FileType markdown map \h2 YpVr-
+  autocmd FileType markdown map <leader>h1 YpVr=
+  autocmd FileType markdown map <leader>h2 YpVr-
 augroup END
 augroup tmux
   autocmd!
