@@ -22,6 +22,7 @@ set splitright
 set tabpagemax=30
 set tabstop=2
 set term=xterm-256color
+set wildmenu
 if &diff
   syntax off
 else
