@@ -1,5 +1,5 @@
 #command
-A shell cat -A % | less\r
-B shell git blame % | less\r
+A shell cat -A "%" | less\r
+B shell git blame "%" | less\r
 C pipe \rcat\r
-H shell /usr/share/source-highlight/src-hilite-lesspipe.sh % | less \r
+H shell /usr/share/source-highlight/src-hilite-lesspipe.sh "%" | less \r
